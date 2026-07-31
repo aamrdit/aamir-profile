@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Nuxt build output
+.nuxt/
+.output/
+.data/
+dist/
+.vercel/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
+.playwright/
+.playwright-cli/
+
+# Lighthouse CI
+.lighthouseci/
+
+# Test coverage
+coverage/
+
+# Editor and OS
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Local Claude Code tooling, not part of the site build. skills-lock.json IS
+# committed so the installed skill set stays reproducible. .claude/skills/
+# find-skills is an NTFS junction into .agents/skills/find-skills, which git
+# would follow and duplicate.
+.claude/
+.agents/

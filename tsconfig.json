@@ -1,0 +1,13 @@
+{
+  // Nuxt 4 generates one tsconfig per environment and expects a solution-style
+  // root that references them. Strictness lives in nuxt.config.ts under
+  // `typescript.tsConfig` so it reaches every generated project; setting it
+  // here instead breaks the auto-import type resolution. See DECISIONS.md.
+  "files": [],
+  "references": [
+    { "path": "./.nuxt/tsconfig.app.json" },
+    { "path": "./.nuxt/tsconfig.server.json" },
+    { "path": "./.nuxt/tsconfig.shared.json" },
+    { "path": "./.nuxt/tsconfig.node.json" }
+  ]
+}

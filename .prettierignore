@@ -1,0 +1,15 @@
+.nuxt/
+.output/
+.vercel/
+node_modules/
+coverage/
+test-results/
+playwright-report/
+blob-report/
+.lighthouseci/
+assets/fonts/
+pnpm-lock.yaml
+.agents/
+.claude/
+.playwright/
+.playwright-cli/

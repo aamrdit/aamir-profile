@@ -1,0 +1,28 @@
+diff --git a/dist/chrome-launcher.js b/dist/chrome-launcher.js
+index d7fb4cf753f817e241554438b317ec333af2e7fc..70b27708fa4d2b311e17d3b86b2d88bb21b797b3 100644
+--- a/dist/chrome-launcher.js
++++ b/dist/chrome-launcher.js	
+@@ -364,7 +364,22 @@ class Launcher {
+         // backwards support for node v12 + v14.14+
+         // https://nodejs.org/api/deprecations.html#DEP0147
+         const rmSync = this.fs.rmSync || this.fs.rmdirSync;
+-        rmSync(this.userDataDir, { recursive: true, force: true, maxRetries: 10 });
++        // PATCHED (aamirbutt.com): on Windows, Chrome's crashpad handler keeps a
++        // handle on the temp profile directory after the browser process exits,
++        // so this rmSync throws EPERM even with maxRetries. The throw propagates
++        // out of Launcher.kill() and aborts the Lighthouse CLI *after* the audit
++        // has completed but *before* results are written, which makes `lhci` and
++        // therefore `pnpm verify` unusable on Windows.
++        //
++        // Failing to delete a temp directory is not a reason to discard a
++        // finished audit, so the cleanup error is swallowed. This cannot mask an
++        // audit failure: it runs only in teardown, after results exist.
++        try {
++            rmSync(this.userDataDir, { recursive: true, force: true, maxRetries: 10 });
++        }
++        catch (err) {
++            log.warn('ChromeLauncher', `Could not remove temp profile dir: ${err.message}`);
++        }
+     }
+ }
+ ;

@@ -1,0 +1,69 @@
+{
+  "name": "aamirbutt-com",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Personal landing page: Aamir Butt, automation and enterprise architecture contractor",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": "24.x"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ],
+    "overrides": {
+      "typescript": "5.9.3"
+    },
+    "patchedDependencies": {
+      "chrome-launcher@1.2.1": "patches/chrome-launcher@1.2.1.patch"
+    }
+  },
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build && node scripts/check-placeholders.mjs && node scripts/check-bans.mjs",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "typecheck": "nuxt typecheck",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:lhci": "lhci autorun",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build && pnpm test:e2e && pnpm test:lhci"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
+    "nuxt": "^4.5.1",
+    "resend": "^6.18.1",
+    "vue": "^3.5.40",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@lhci/cli": "^0.15.1",
+    "@nuxt/eslint": "^1.16.0",
+    "@nuxt/fonts": "^0.14.0",
+    "@nuxt/image": "^2.1.0",
+    "@nuxt/test-utils": "^4.1.0",
+    "@nuxtjs/seo": "^5.3.6",
+    "@nuxtjs/turnstile": "^1.1.3",
+    "@playwright/cli": "^0.1.17",
+    "@playwright/test": "^1.62.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitest/coverage-v8": "^4.1.10",
+    "@vue/test-utils": "^2.4.11",
+    "eslint": "^10.8.0",
+    "happy-dom": "^20.11.1",
+    "prettier": "^3.9.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10",
+    "vue-tsc": "^3.3.9"
+  }
+}

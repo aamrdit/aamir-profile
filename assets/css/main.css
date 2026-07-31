@@ -1,0 +1,235 @@
+/* Automatic source detection is switched off and replaced with an explicit
+   list. Left on, Tailwind 4 scans every non-ignored file in the project --
+   including CLAUDE.md and DECISIONS.md -- and turns bare words in prose into
+   utilities. The word "shadow" in DECISIONS.md generated a `.shadow` class
+   carrying a box-shadow, which Section 3 bans outright. See DECISIONS.md. */
+@import 'tailwindcss' source(none);
+
+@source '../../app.vue';
+@source '../../components';
+@source '../../composables';
+@source '../../content';
+@source '../../pages';
+
+/* ==========================================================================
+   Self-hosted faces (Section 6, D7)
+   Three woff2 files, no more. Switzer from Fontshare, Martian Mono from
+   Google's pre-subset latin file. font-display: swap per spec; both
+   above-fold Switzer faces are preloaded in app.vue so the swap window is
+   effectively zero and contributes no CLS (see DECISIONS.md, C13).
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Switzer';
+  src: url('../fonts/switzer-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Switzer';
+  src: url('../fonts/switzer-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Martian Mono';
+  src: url('../fonts/martian-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ==========================================================================
+   Design tokens (Section 6)
+
+   !! READ BEFORE USING A SPACING UTILITY !!
+   Tailwind's dynamic spacing scale is switched off (`--spacing: initial`) and
+   replaced by the nine explicit multiples-of-three values below. This means
+   `p-12` is 12px, NOT Tailwind's default 48px. Only 3, 6, 12, 18, 24, 36, 48,
+   72, 96 and 144 exist; `p-4` or `gap-5` will not compile, which is deliberate
+   -- it forces the three-based grid. Need another size? Add a token here.
+   See DECISIONS.md, C8.
+   ========================================================================== */
+
+@theme {
+  /* Colour: five values plus one text-safe accent variant */
+  --color-ink: #16150f; /* body text, dark bands, primary buttons */
+  --color-paper: #e9e8e3; /* page background */
+  --color-paper-alt: #dedcd5; /* alternating sections, cards */
+  --color-rule: #b4b1a8; /* 1px rules, borders, dividers */
+  --color-brass: #a8843f; /* accent: status dot, residue rules, focus ring */
+  --color-brass-text: #7a5f26; /* the ONLY brass permitted for text */
+
+  /* Type */
+  --font-primary: 'Switzer', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Martian Mono', ui-monospace, monospace;
+
+  /* Type scale (Section 6). Line height and tracking travel with the size. */
+  --text-h1: clamp(2.75rem, 6vw, 5.5rem);
+  --text-h1--line-height: 0.98;
+  --text-h1--letter-spacing: -0.03em;
+
+  --text-h2: clamp(2rem, 3.5vw, 3rem);
+  --text-h2--line-height: 1.05;
+  --text-h2--letter-spacing: -0.02em;
+
+  --text-h3: 1.375rem;
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: -0.01em;
+
+  --text-body: clamp(1.0625rem, 1.2vw, 1.25rem);
+  --text-body--line-height: 1.6;
+  --text-body--letter-spacing: 0;
+
+  /* D6: floor raised from the spec's 0.6875rem (11px) to 0.75rem (12px) so
+     02-responsive's "no computed font size below 12px" assertion holds. */
+  --text-mono-label: clamp(0.75rem, 0.8vw, 0.8125rem);
+  --text-mono-label--line-height: 1.3;
+  --text-mono-label--letter-spacing: 0.14em;
+
+  /* Spacing: multiples of three only. Dynamic scale disabled -- see note above. */
+  --spacing: initial;
+  --spacing-3: 3px;
+  --spacing-6: 6px;
+  --spacing-12: 12px;
+  --spacing-18: 18px;
+  --spacing-24: 24px;
+  --spacing-36: 36px;
+  --spacing-48: 48px;
+  --spacing-72: 72px;
+  --spacing-96: 96px;
+  --spacing-144: 144px;
+
+  /* Layout */
+  --content-max: 1440px;
+  --nav-height-desktop: 64px;
+  --nav-height-mobile: 56px;
+
+  /* Radius: 2px is the ceiling. Nothing rounder, ever (Section 3). */
+  --radius-max: 2px;
+}
+
+/* ==========================================================================
+   Base layer
+   ========================================================================== */
+
+@layer base {
+  html {
+    /* FR-006: smooth scroll with anchor offset, both off under reduced motion. */
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-primary);
+    font-size: var(--text-body);
+    line-height: 1.6;
+    font-weight: 400;
+    /* Guards against the 320px overflow assertion in 02-responsive. */
+    overflow-x: hidden;
+  }
+
+  /* FR-007: 2px brass outline, 2px offset, on every focusable element.
+     Never `outline: none` without this replacement (Section 3). */
+  :focus-visible {
+    outline: 2px solid var(--color-brass);
+    outline-offset: 2px;
+  }
+
+  /* Headings inherit weight from utilities, not from the UA stylesheet. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 500;
+    text-wrap: balance;
+  }
+
+  /* Images never exceed their column (320px overflow guard). */
+  img,
+  svg,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Section 6: every animation is wrapped in a reduced-motion guard that
+     removes it entirely, not merely shortens it. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+/* Content column, capped and centred, with the Section 6 gutter steps:
+   24px at sm, 48px at md, 96px at desktop. */
+@utility shell {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--spacing-24);
+
+  @media (width >= 48rem) {
+    padding-inline: var(--spacing-48);
+  }
+
+  @media (width >= 64rem) {
+    padding-inline: var(--spacing-96);
+  }
+}
+
+/* Section vertical rhythm: 72px mobile, 144px desktop. */
+@utility section-pad {
+  padding-block: var(--spacing-72);
+
+  @media (width >= 64rem) {
+    padding-block: var(--spacing-144);
+  }
+}
+
+/* D8: 46ch on the standfirst and section intros per FR-205 ... */
+@utility measure-tight {
+  max-width: 46ch;
+}
+
+/* ... and a conventional reading measure on long-form prose. */
+@utility measure-prose {
+  max-width: 64ch;
+}
+
+/* FR-005: skip link, visually hidden until focused. Also used for the
+   honeypot field (FR-904), which additionally gets aria-hidden. */
+@utility visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border-width: 0;
+}
