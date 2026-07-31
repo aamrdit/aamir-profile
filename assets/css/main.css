@@ -85,6 +85,11 @@
   --text-body--line-height: 1.6;
   --text-body--letter-spacing: 0;
 
+  /* FR-302: proof cell values sit at 32px in the primary family. */
+  --text-proof: 2rem;
+  --text-proof--line-height: 1.1;
+  --text-proof--letter-spacing: -0.02em;
+
   /* D6: floor raised from the spec's 0.6875rem (11px) to 0.75rem (12px) so
      02-responsive's "no computed font size below 12px" assertion holds. */
   --text-mono-label: clamp(0.75rem, 0.8vw, 0.8125rem);
@@ -103,11 +108,18 @@
   --spacing-72: 72px;
   --spacing-96: 96px;
   --spacing-144: 144px;
+  /* Exception to the three-based scale: FR-203 specifies an 8px brass dot.
+     Added as a token rather than an arbitrary value so templates stay
+     token-only. See DECISIONS.md. */
+  --spacing-8: 8px;
 
   /* Layout */
   --content-max: 1440px;
   --nav-height-desktop: 64px;
   --nav-height-mobile: 56px;
+  /* FR-102's 80px scroll threshold and FR-006's scroll-padding-top are the
+     same number; this keeps them from drifting apart. */
+  --nav-solid-threshold: 80px;
 
   /* Radius: 2px is the ceiling. Nothing rounder, ever (Section 3). */
   --radius-max: 2px;
@@ -121,7 +133,7 @@
   html {
     /* FR-006: smooth scroll with anchor offset, both off under reduced motion. */
     scroll-behavior: smooth;
-    scroll-padding-top: 80px;
+    scroll-padding-top: var(--nav-solid-threshold);
     -webkit-text-size-adjust: 100%;
   }
 
@@ -210,6 +222,11 @@
   }
 }
 
+/* FR-204: holds the H1 to three lines at desktop widths. */
+@utility measure-display {
+  max-width: 16ch;
+}
+
 /* D8: 46ch on the standfirst and section intros per FR-205 ... */
 @utility measure-tight {
   max-width: 46ch;
@@ -218,6 +235,55 @@
 /* ... and a conventional reading measure on long-form prose. */
 @utility measure-prose {
   max-width: 64ch;
+}
+
+/* FR-102: an 80px-tall probe pinned to the document origin. Once it leaves the
+   viewport the page has scrolled past the threshold, which lets an
+   IntersectionObserver replace the banned scroll listener. See DECISIONS.md C2. */
+@utility nav-sentinel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: var(--nav-solid-threshold);
+  pointer-events: none;
+}
+
+/* FR-101: 64px desktop, 56px mobile, from the layout tokens. */
+@utility nav-height {
+  height: var(--nav-height-mobile);
+
+  @media (width >= 64rem) {
+    height: var(--nav-height-desktop);
+  }
+}
+
+/* FR-005: the skip link is the first focusable element, visually hidden until
+   focused, and then fully visible at the top left. */
+@utility skip-link {
+  position: absolute;
+  top: var(--spacing-12);
+  left: var(--spacing-12);
+  z-index: 100;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+
+  &:focus-visible {
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+    padding: var(--spacing-12) var(--spacing-24);
+    font-family: var(--font-mono);
+    font-size: var(--text-mono-label);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
 }
 
 /* FR-005: skip link, visually hidden until focused. Also used for the

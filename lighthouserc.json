@@ -12,6 +12,7 @@
       }
     },
     "assert": {
+      "aggregationMethod": "median",
       "assertions": {
         "total-byte-weight": ["error", { "maxNumericValue": 921600 }],
         "resource-summary:script:size": ["error", { "maxNumericValue": 122880 }],

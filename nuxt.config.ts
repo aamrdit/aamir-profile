@@ -20,6 +20,11 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
+  // Section 7 nests components under layout/, sections/ and ui/ but refers to
+  // them by bare name. pathPrefix: false keeps <SectionShell> rather than
+  // <UiSectionShell>.
+  components: [{ path: '~/components', pathPrefix: false }],
+
   vite: {
     plugins: [tailwindcss()],
   },
@@ -42,6 +47,10 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'en-GB' },
+      // SEO-01 fixes the title exactly. @nuxtjs/seo otherwise appends
+      // " | Aamir Butt" via its default titleTemplate, pushing it over 60
+      // characters and duplicating the name.
+      titleTemplate: '%s',
     },
   },
 
