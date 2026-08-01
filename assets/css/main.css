@@ -85,6 +85,14 @@
   --text-body--line-height: 1.6;
   --text-body--letter-spacing: 0;
 
+  /* FR-802: the about pull quote sits at 28px. */
+  --text-quote: 1.75rem;
+  --text-quote--line-height: 1.25;
+  --text-quote--letter-spacing: -0.02em;
+
+  /* FR-602: the reserved video container caps at 880px. */
+  --video-max: 880px;
+
   /* FR-302: proof cell values sit at 32px in the primary family. */
   --text-proof: 2rem;
   --text-proof--line-height: 1.1;
@@ -193,6 +201,84 @@
 }
 
 /* ==========================================================================
+   Print (Section 16, item 11)
+
+   Should print to something a recruiter could hand over: nav, CTAs and
+   animation suppressed, ink on white, links resolved to their targets.
+   ========================================================================== */
+
+@media print {
+  :root {
+    --color-paper: #fff;
+    --color-paper-alt: #fff;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  /* The fixed nav, the skip link and every call to action are noise on paper. */
+  #nav,
+  .skip-link,
+  [data-testid^='cta-'],
+  [data-testid='enquiry-form'],
+  [data-testid='video-slot'],
+  [data-testid='collapse-residue'] {
+    display: none !important;
+  }
+
+  /* Nothing animates, and the collapse section prints in its end state. */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .collapse-steps {
+    display: none !important;
+  }
+
+  .collapse-cards,
+  .collapse-caption {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Every FAQ answer prints, whether or not it was open on screen. */
+  details {
+    display: block !important;
+  }
+
+  details > summary {
+    list-style: none;
+  }
+
+  details:not([open]) > *:not(summary) {
+    display: block !important;
+  }
+
+  /* Resolve link targets so a printed page is still actionable. */
+  a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.75em;
+    word-break: break-all;
+  }
+
+  section {
+    break-inside: avoid;
+    padding-block: var(--spacing-24) !important;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+}
+
+/* ==========================================================================
    Utilities
    ========================================================================== */
 
@@ -222,9 +308,226 @@
   }
 }
 
-/* FR-204: holds the H1 to three lines at desktop widths. */
+/* Section 6 motion: hero load is a staggered 400ms upward fade at 80ms
+   intervals. Wrapped in no-preference so reduced motion removes it entirely
+   rather than shortening it -- the content is simply present from the start. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes hero-rise {
+    from {
+      opacity: 0;
+      transform: translateY(var(--spacing-18));
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes rule-grow {
+    from {
+      transform: scaleY(0);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+
+  .hero-rise {
+    animation: hero-rise 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--rise-step, 0) * 80ms);
+  }
+
+  .rule-grow {
+    transform-origin: top;
+    animation: rule-grow 900ms cubic-bezier(0.16, 1, 0.3, 1) 400ms both;
+  }
+}
+
+/* FR-201: at least 100svh, capped at 900px. svh avoids the mobile browser
+   chrome resize jump that 100vh causes. */
+@utility hero-frame {
+  min-height: min(100svh, 900px);
+}
+
+/* Stagger positions for the hero load. Kept as utilities rather than inline
+   style bindings, which vue/no-static-inline-styles rejects. */
+@utility rise-0 {
+  --rise-step: 0;
+}
+@utility rise-1 {
+  --rise-step: 1;
+}
+@utility rise-2 {
+  --rise-step: 2;
+}
+@utility rise-3 {
+  --rise-step: 3;
+}
+@utility rise-4 {
+  --rise-step: 4;
+}
+
+/* ==========================================================================
+   FR-400: the collapse section
+
+   Both states live in the DOM at all times. A pre-paint inline script sets
+   data-motion="on" on <html> when motion is permitted; CSS decides which state
+   shows. This satisfies FR-402 (client script, motion-gated) while avoiding
+   the flash and CLS that a mount-time 3-to-9 swap would cause, and it makes
+   FR-010's no-JavaScript end state free. See DECISIONS.md C4.
+
+   The two layers are stacked in one grid cell so the container height never
+   changes between states. A height change here would register as layout shift:
+   scrolling is not a CLS-excluded input, so an animated reflow would eat the
+   0.05 budget.
+   ========================================================================== */
+
+@utility collapse-stage {
+  display: grid;
+
+  & > * {
+    grid-area: 1 / 1;
+  }
+}
+
+/* Stagger positions, 60ms apart per FR-405. */
+@utility idx-0 {
+  --i: 0;
+}
+@utility idx-1 {
+  --i: 1;
+}
+@utility idx-2 {
+  --i: 2;
+}
+@utility idx-3 {
+  --i: 3;
+}
+@utility idx-4 {
+  --i: 4;
+}
+@utility idx-5 {
+  --i: 5;
+}
+@utility idx-6 {
+  --i: 6;
+}
+@utility idx-7 {
+  --i: 7;
+}
+@utility idx-8 {
+  --i: 8;
+}
+
+@layer components {
+  /* Default: the three card end state. This is what no-JavaScript and
+     reduced-motion visitors get, with no transition at all (FR-408, FR-010). */
+  .collapse-steps {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .collapse-cards,
+  .collapse-residue,
+  .collapse-caption {
+    opacity: 1;
+  }
+
+  /* Motion permitted: start from the nine step state. */
+  [data-motion='on'] .collapse-steps {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  [data-motion='on'] .collapse-cards {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  [data-motion='on'] .collapse-residue {
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  /* The caption states what was removed; with motion it is redundant with the
+     animation itself, so it only shows when the animation cannot be seen. */
+  [data-motion='on'] .collapse-caption {
+    opacity: 0;
+  }
+
+  /* FR-403: fired once at 40% visibility. FR-405: 900ms, that easing, 60ms
+     per card. FR-404: the six removed steps do not fade to nothing -- they
+     become brass residue rules that stay. */
+  [data-motion='on'] .collapse-step,
+  [data-motion='on'] .collapse-steps,
+  [data-motion='on'] .collapse-cards,
+  [data-motion='on'] .collapse-card,
+  [data-motion='on'] .collapse-residue,
+  [data-motion='on'] .collapse-caption {
+    transition:
+      opacity 900ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 900ms cubic-bezier(0.16, 1, 0.3, 1),
+      visibility 900ms;
+    transition-delay: calc(var(--i, 0) * 60ms);
+  }
+
+  [data-motion='on'] [data-collapsed='true'] .collapse-steps {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  [data-motion='on'] [data-collapsed='true'] .collapse-cards {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  [data-motion='on'] [data-collapsed='true'] .collapse-residue {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  [data-motion='on'] [data-collapsed='true'] .collapse-caption {
+    opacity: 1;
+  }
+}
+
+/* FR-208 and FR-802 portrait boxes. The source is 512x512 and is never
+   upscaled: 240 CSS px is the maximum display size the spec allows. */
+@utility portrait-hero {
+  width: 160px;
+  height: 160px;
+
+  @media (width >= 48rem) {
+    width: 240px;
+    height: 240px;
+  }
+}
+
+@utility portrait-about {
+  width: 180px;
+  height: 180px;
+}
+
+/* FR-602: the aspect ratio is in the CSS from v1, so dropping a real video in
+   later causes zero layout shift. In v1 it holds a designed placeholder --
+   never an empty gap and never a broken <video>. */
+@utility video-slot {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  max-width: var(--video-max);
+  margin-inline: auto;
+}
+
+/* FR-204: below lg the H1 wraps naturally and needs a measure. At lg and above
+   the author-controlled <br> takes over, so the cap has to be released --
+   leaving it on made the three deliberate lines wrap into four. */
 @utility measure-display {
   max-width: 16ch;
+
+  @media (width >= 64rem) {
+    max-width: none;
+  }
 }
 
 /* D8: 46ch on the standfirst and section intros per FR-205 ... */
@@ -235,6 +538,29 @@
 /* ... and a conventional reading measure on long-form prose. */
 @utility measure-prose {
   max-width: 64ch;
+}
+
+/* Section 13 scroll_depth. Four probes at fractions of the page height, read
+   by IntersectionObserver -- Section 3 bans scroll listeners (DECISIONS.md C2). */
+@utility depth-probe {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+@utility depth-25 {
+  top: 25%;
+}
+@utility depth-50 {
+  top: 50%;
+}
+@utility depth-75 {
+  top: 75%;
+}
+@utility depth-100 {
+  top: calc(100% - 1px);
 }
 
 /* FR-102: an 80px-tall probe pinned to the document origin. Once it leaves the

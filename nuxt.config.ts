@@ -18,6 +18,19 @@ export default defineNuxtConfig({
     '@nuxtjs/seo',
   ],
 
+  // D11: every third party is env-gated. Unset means the feature simply does
+  // not render, so the suite stays green without keys.
+  runtimeConfig: {
+    public: {
+      turnstileSiteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY ?? '',
+      plausibleDomain: process.env.NUXT_PUBLIC_PLAUSIBLE_DOMAIN ?? '',
+      // Vercel Analytics and Speed Insights are served from /_vercel/*, which
+      // only exists on a Vercel deployment. Injecting them anywhere else
+      // produces 404s and console errors, which 01-page-load rightly fails on.
+      vercelEnv: process.env.VERCEL_ENV ?? '',
+    },
+  },
+
   css: ['~/assets/css/main.css'],
 
   // Section 7 nests components under layout/, sections/ and ui/ but refers to
@@ -51,6 +64,17 @@ export default defineNuxtConfig({
       // " | Aamir Butt" via its default titleTemplate, pushing it over 60
       // characters and duplicating the name.
       titleTemplate: '%s',
+      script: [
+        {
+          // Runs before first paint so #collapse never flashes from its end
+          // state to its start state. Setting this after hydration would cost
+          // a visible swap and CLS. See DECISIONS.md C4.
+          innerHTML:
+            "try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.dataset.motion='on'}}catch(e){}",
+          tagPosition: 'head',
+          tagPriority: 'critical',
+        },
+      ],
     },
   },
 
@@ -63,6 +87,29 @@ export default defineNuxtConfig({
   // C11: @nuxtjs/seo bundles nuxt-og-image, which pulls in satori. SEO-04
   // specifies a separately designed static /images/og.jpg, so it stays off.
   ogImage: { enabled: false },
+
+  // SEO-07: AI crawlers are allowed explicitly. Discovery is the goal here, so
+  // blocking them would work against the point of the site.
+  robots: {
+    groups: [
+      { userAgent: ['*'], allow: ['/'], disallow: ['/thanks'] },
+      {
+        userAgent: [
+          'GPTBot',
+          'ClaudeBot',
+          'PerplexityBot',
+          'Google-Extended',
+          'CCBot',
+        ],
+        allow: ['/'],
+      },
+    ],
+  },
+
+  sitemap: {
+    // /thanks is a post-submission confirmation, not a landing page.
+    exclude: ['/thanks'],
+  },
 
   // D7: three self-hosted woff2 faces declared by hand in assets/css/main.css.
   // Every remote provider is disabled so the module cannot fetch a fourth file.
@@ -87,19 +134,35 @@ export default defineNuxtConfig({
 
     prerender: {
       crawlLinks: true,
-      routes: ['/', '/thanks', '/legal'],
+      routes: ['/', '/thanks', '/legal', '/llms.txt', '/aamir-butt.md'],
       failOnError: true,
     },
   },
 
   routeRules: {
+    // @nuxt/image writes its build-time variants to paths ending in .jpg even
+    // when the bytes are WebP, so extension-based MIME detection mislabels
+    // them as image/jpeg. 05-media asserts the content-type, and browsers
+    // should not be told the wrong format either. Mirrored in vercel.json.
+    '/_ipx/**': {
+      headers: {
+        'content-type': 'image/webp',
+        'cache-control': 'public, max-age=31536000, immutable',
+      },
+    },
     '/': { prerender: true },
     '/thanks': { prerender: true },
     '/legal': { prerender: true },
   },
 
   features: {
-    // No global CSS transitions; motion is opt-in per FR-006 and Section 6.
+    /**
+     * Off. Inlining was enabled at M2 and did help while the page was small,
+     * but once every section landed the CSS grew and inlining it into each
+     * prerendered document cost more than the request it saved: total blocking
+     * time measured consistently higher with it on, and a single cacheable
+     * stylesheet is better across the three routes. See DECISIONS.md M8.
+     */
     inlineStyles: false,
   },
 })

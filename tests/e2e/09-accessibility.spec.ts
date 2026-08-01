@@ -3,7 +3,21 @@ import { expect, test, type Page } from '@playwright/test'
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']
 
+/**
+ * Section 6's hero load is a staggered fade from opacity 0. Scanning mid-fade
+ * measures a part-transparent colour: axe reported the H1 at 1.83:1 with a
+ * foreground of #aeada7, which is ink part-way through the animation, not the
+ * settled 15.5:1. Wait for every animation to finish so the scan reflects what
+ * a reader actually sees.
+ */
+async function settle(page: Page) {
+  await page.evaluate(() =>
+    Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))),
+  )
+}
+
 async function scan(page: Page) {
+  await settle(page)
   return new AxeBuilder({ page }).withTags(TAGS).analyze()
 }
 
@@ -41,10 +55,46 @@ test.describe('accessibility', () => {
     })
   }
 
-  // FAQ lands at M5; the failed-validation state lands at M6. Both are named in
-  // Section 2's five page states and are added with the features they cover.
-  test.fixme('all FAQ items expanded has zero violations', async () => {})
-  test.fixme('failed form validation has zero violations', async () => {})
+  test('all FAQ items expanded has zero violations', async ({ page }) => {
+    await page.goto('/')
+    const items = page.getByTestId('faq-item')
+    await expect(items).toHaveCount(8)
+
+    await items.evaluateAll((nodes) => {
+      for (const node of nodes) (node as HTMLDetailsElement).open = true
+    })
+
+    const { violations } = await scan(page)
+    expect(violations, describeViolations(violations)).toEqual([])
+  })
+
+  // Section 14 singles this out as where accessibility defects most often hide.
+  test('failed form validation has zero violations', async ({ page }) => {
+    await page.goto('/')
+    await page.getByTestId('submit-enquiry').click()
+    await expect(page.getByTestId('error-summary')).toBeVisible()
+
+    const { violations } = await scan(page)
+    expect(violations, describeViolations(violations)).toEqual([])
+  })
+
+  test('every form input has an associated label', async ({ page }) => {
+    await page.goto('/')
+
+    const unlabelled = await page.evaluate(() => {
+      const bad: string[] = []
+      for (const el of document.querySelectorAll<HTMLElement>('input, select, textarea')) {
+        if (el.closest('[aria-hidden="true"]')) continue // the honeypot
+        const id = el.getAttribute('id')
+        const hasLabel = id ? !!document.querySelector(`label[for="${id}"]`) : false
+        const hasAria = el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby')
+        if (!hasLabel && !hasAria) bad.push(el.getAttribute('name') ?? el.tagName)
+      }
+      return bad
+    })
+
+    expect(unlabelled, `unlabelled: ${unlabelled.join(', ')}`).toEqual([])
+  })
 
   test('html lang is en-GB (FR-002)', async ({ page }) => {
     await page.goto('/')

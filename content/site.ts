@@ -195,10 +195,18 @@ export const SERVICES = {
   eyebrow: 'WHAT I DO',
   h2: 'Three tracks, one discipline.',
   body: 'Whether the engagement is labelled architecture, transformation or automation, the work is the same: understand the estate, decide what should change, and make the change stick.',
+  /**
+   * FR-502 requires a two sentence description per card. Section 9's copy deck
+   * supplies the eyebrow, heading and deliverables but not the description, so
+   * these three are authored in the deck's voice. Positioning copy, not
+   * factual claims -- and a draft for review like everything else (Section 17.7).
+   */
   tracks: [
     {
       eyebrow: 'TRACK 01',
       heading: 'Automation design and delivery',
+      description:
+        'Finding the processes worth automating, then designing automation that holds once it meets real volume and real exceptions. Delivered through to live, not to pilot.',
       deliverables: [
         'Process discovery and prioritisation',
         'Automation architecture',
@@ -209,6 +217,8 @@ export const SERVICES = {
     {
       eyebrow: 'TRACK 02',
       heading: 'Enterprise architecture and transformation',
+      description:
+        'Mapping the estate as it is, agreeing what it should become, and sequencing the change so the organisation can absorb it. Architecture that survives contact with delivery.',
       deliverables: [
         'Current and target state models',
         'Integration strategy',
@@ -219,6 +229,8 @@ export const SERVICES = {
     {
       eyebrow: 'TRACK 03',
       heading: 'Technical programme delivery',
+      description:
+        'Running the plan, the vendors and the dependencies so a programme actually lands. Accountable for go live, not just for the governance pack.',
       deliverables: [
         'Delivery planning',
         'Vendor and supplier management',
@@ -274,6 +286,13 @@ export const WORK = {
     { index: 'CASE 02', sector: 'TODO_CASE_02', duration: 'TODO_CASE_02', body: PLACEHOLDERS.CASE_02 },
     { index: 'CASE 03', sector: 'TODO_CASE_03', duration: 'TODO_CASE_03', body: PLACEHOLDERS.CASE_03 },
   ],
+  /**
+   * Section 5 makes this format mandatory: exactly four labelled parts, one to
+   * two sentences each, the outcome containing at least one number, and no
+   * organisation named anywhere (FR-704 -- a compliance requirement, not a
+   * style preference). Rendering the labels with the placeholder under each
+   * shows Aamir exactly what has to be written.
+   */
   partLabels: ['Context', 'Problem', 'What I did', 'Outcome'],
 } as const
 
@@ -442,4 +461,59 @@ export const SECTION_HEADINGS: Record<SectionId, string> = {
   availability: AVAILABILITY.h2,
   faq: FAQ.h2,
   contact: CONTACT.h2,
+}
+
+// ---------------------------------------------------------------------------
+// SEO-08: four JSON-LD blocks, all generated from the objects above so the
+// structured data cannot drift from the rendered page. FR-805 depends on this
+// for the FAQ in particular: the answers below ARE the rendered answers.
+// ---------------------------------------------------------------------------
+
+const PERSON_ID = `${SITE.url}/#person`
+
+export function jsonLdBlocks(): Array<Record<string, unknown>> {
+  const person = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    '@id': PERSON_ID,
+    name: SITE.name,
+    jobTitle: SITE.role,
+    email: `mailto:${SITE.email}`,
+    url: SITE.url,
+    image: `${SITE.url}/images/aamir-butt-profile.jpg`,
+    sameAs: [SITE.linkedin, SITE.x],
+    knowsAbout: [...KNOWS_ABOUT],
+    address: { '@type': 'PostalAddress', addressCountry: 'GB' },
+  }
+
+  const profilePage = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    '@id': `${SITE.url}/#profilepage`,
+    url: SITE.url,
+    name: META.title,
+    description: META.description,
+    mainEntity: person,
+  }
+
+  const services = SERVICES.tracks.map((track) => ({
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: track.heading,
+    description: track.description,
+    areaServed: 'GB',
+    provider: { '@id': PERSON_ID },
+  }))
+
+  const faqPage = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQ.items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: { '@type': 'Answer', text: item.answer },
+    })),
+  }
+
+  return [person, profilePage, ...services, faqPage]
 }

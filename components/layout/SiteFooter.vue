@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { FOOTER, SITE } from '~/content/site'
 
+const { track } = useAnalytics()
+
+function onSocialClick(testid: string) {
+  if (testid === 'link-linkedin') track({ name: 'linkedin_click', props: { location: 'footer' } })
+  if (testid === 'link-x') track({ name: 'x_click', props: { location: 'footer' } })
+}
+
 /**
  * FR-912: ink background, three columns collapsing to one at sm.
  * FR-913: every external link carries target="_blank" and
@@ -19,6 +26,7 @@ import { FOOTER, SITE } from '~/content/site'
         <a
           :href="SITE.mailto"
           class="text-paper font-primary mt-12 inline-flex min-h-48 items-center underline decoration-1 underline-offset-4"
+          @click="track({ name: 'email_link_click', props: { location: 'footer' } })"
         >
           {{ SITE.email }}
         </a>
@@ -36,6 +44,7 @@ import { FOOTER, SITE } from '~/content/site'
               target="_blank"
               rel="noopener noreferrer"
               class="text-paper font-primary inline-flex min-h-48 items-center underline decoration-1 underline-offset-4"
+              @click="onSocialClick(item.testid)"
             >
               {{ item.label }}
             </a>
@@ -56,9 +65,21 @@ import { FOOTER, SITE } from '~/content/site'
               {{ FOOTER.legalLinkLabel }}
             </NuxtLink>
           </li>
-          <!-- SEO-10 adds the rel="alternate" link to /aamir-butt.md here at
-               M7, when that machine asset is generated. Linking it now would
-               ship a 404. -->
+          <li>
+            <!-- SEO-10: the full page as clean markdown at a stable URL.
+                 link-checker only knows page routes; this is served by
+                 server/routes/aamir-butt.md.ts and prerendered, and
+                 01-page-load asserts it returns 200. -->
+            <!-- eslint-disable link-checker/valid-route, link-checker/valid-sitemap-link -->
+            <a
+              href="/aamir-butt.md"
+              rel="alternate"
+              class="text-paper font-primary inline-flex min-h-48 items-center underline decoration-1 underline-offset-4"
+            >
+              {{ FOOTER.markdownLinkLabel }}
+            </a>
+            <!-- eslint-enable link-checker/valid-route, link-checker/valid-sitemap-link -->
+          </li>
         </ul>
       </div>
     </div>

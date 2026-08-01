@@ -95,15 +95,13 @@ test.describe('page load', () => {
     })
   }
 
-  // SEO-09 and SEO-10 machine assets are generated at M7.
-  test.fixme('/llms.txt and /aamir-butt.md return 200', async ({ request }) => {
+  test('/llms.txt and /aamir-butt.md return 200', async ({ request }) => {
     for (const path of ['/llms.txt', '/aamir-butt.md']) {
       expect((await request.get(path)).status()).toBe(200)
     }
   })
 
-  // SEO-08's four JSON-LD blocks are generated at M7.
-  test.fixme('all four JSON-LD blocks parse and carry the expected @type', async ({
+  test('all four JSON-LD blocks parse and carry the expected @type', async ({
     page,
   }) => {
     await page.goto('/')
@@ -119,8 +117,7 @@ test.describe('page load', () => {
     }
   })
 
-  // The hero portrait lands at M2 (FR-208, FR-209).
-  test.fixme('hero image reports non-zero naturalWidth', async ({ page }) => {
+  test('hero image reports non-zero naturalWidth', async ({ page }) => {
     await page.goto('/')
     const width = await page
       .getByTestId('hero-image')

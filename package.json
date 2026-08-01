@@ -30,7 +30,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "typecheck": "nuxt typecheck",
-    "test:unit": "vitest run",
+    "test:unit": "vitest run --coverage",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
     "test:lhci": "lhci autorun",
