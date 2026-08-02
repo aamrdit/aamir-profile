@@ -42,3 +42,6 @@ Thumbs.db
 # would follow and duplicate.
 .claude/
 .agents/
+
+.vercel
+.env*.local
