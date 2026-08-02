@@ -237,7 +237,10 @@ async function onSubmit() {
     </div>
 
     <div class="flex flex-col gap-6">
-      <div class="flex items-start gap-12">
+      <!-- The label wraps the control, so the whole row is the tap target
+           (FR-008) rather than a 24px box. `for` is kept as well: the
+           accessibility spec asserts an explicit label association. -->
+      <label for="field-consent" class="checkbox-target font-primary">
         <input
           id="field-consent"
           v-model="form.consent"
@@ -249,13 +252,15 @@ async function onSubmit() {
           :aria-describedby="describedBy('consent')"
           class="mt-6 size-24 shrink-0"
         />
-        <label for="field-consent" class="font-primary">
+        <span>
           {{ CONTACT.consentLabel }}
-          <NuxtLink to="/legal" class="underline underline-offset-4">
+          <!-- .stop so following the link does not also toggle consent, which
+               a link nested in a label otherwise does. -->
+          <NuxtLink to="/legal" class="underline underline-offset-4" @click.stop>
             Privacy notice
           </NuxtLink>
-        </label>
-      </div>
+        </span>
+      </label>
       <p v-if="errors.consent" id="error-consent" data-testid="error-consent" class="font-primary">
         {{ errors.consent }}
       </p>

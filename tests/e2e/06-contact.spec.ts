@@ -129,6 +129,36 @@ test.describe('contact', () => {
     expect(wrapper!.clipped).toBe(true)
   })
 
+  test('the consent control meets the 44px touch target (FR-008)', async ({
+    page,
+  }, testInfo) => {
+    test.skip(!testInfo.project.use.hasTouch, 'FR-008 sets 44px on touch viewports')
+    await page.goto('/')
+
+    // The checkbox itself draws at 24px and cannot grow -- Chrome ignores
+    // padding on a native checkbox. The label wraps it, so the row is the
+    // target, which is what a person actually taps.
+    const row = await page.locator('label[for="field-consent"]').boundingBox()
+    expect(row, 'consent label not found').not.toBeNull()
+    expect(row!.height, `consent row is ${Math.round(row!.height)}px tall`).toBeGreaterThanOrEqual(44)
+
+    // Tapping the row toggles it.
+    await page.locator('label[for="field-consent"]').click({ position: { x: 12, y: 12 } })
+    await expect(page.getByTestId('field-consent')).toBeChecked()
+  })
+
+  test('the privacy link navigates without toggling consent', async ({ page }) => {
+    await page.goto('/')
+    await page.getByTestId('field-consent').setChecked(false)
+
+    // A link nested inside a label otherwise toggles the control on the way.
+    await page.getByTestId('enquiry-form').getByRole('link', { name: 'Privacy notice' }).click()
+    await page.waitForURL('**/legal')
+
+    await page.goBack()
+    await expect(page.getByTestId('field-consent')).not.toBeChecked()
+  })
+
   test('a valid submit navigates to /thanks', async ({ page }) => {
     await page.goto('/')
     await page.route('**/api/enquiry', async (route) => {

@@ -134,6 +134,14 @@ Found only by deploying. Everything here builds cleanly under the local
 - **M9.5** Vercel's Node version was verified as **24.x**, matching `engines.node`, so it was never a factor. Worth recording because it was the first hypothesis and it was wrong: a Node mismatch fails before the build with an explicit message, not with a prerender error.
 - **M9.6 — expected, not a bug.** Both attempted deploys were **Production**, where `VERCEL_ENV=production` makes `check-placeholders.mjs` fail while the 18 `TODO_` values remain (FR-901). Preview deploys build and deploy fine. Production will keep failing, by design, until the facts are filled in.
 
+## M10 — Consent control target size
+
+- **M10.1 — an FR-008 breach, surfaced by a flaky test.** `06-contact`'s busy-state test failed once on mobile-chrome with `locator.check: Clicking the checkbox did not change its state`. The consent checkbox was drawn at 24px, which meets WCAG 2.2 SC 2.5.8 but not FR-008's stricter 44px on touch viewports, and nothing in the suite checked form-control target sizes at all — `03-cta` only measures the CTAs. The flake was the symptom; the small target was the defect.
+- **M10.2 — the obvious fix does not work.** Padding the checkbox to grow its hit box does nothing: Chrome ignores padding on a native checkbox (`appearance: auto`), and computed padding stayed `0px` even with `box-sizing: content-box` overriding Preflight. Growing the box itself would need `appearance: none` and a hand-drawn control, which Section 18's stated preference for native elements argues against.
+- **M10.3** The label now wraps the control, so the tap target is the whole row — measured **364×94** on a Pixel 7 — while the box keeps its 24px visual. `for` is retained alongside the implicit association because `09-accessibility` asserts an explicit `label[for]` pairing.
+- **M10.4** The privacy link nested in that label got `@click.stop`. A link inside a label otherwise toggles the control on the way through, so following "Privacy notice" silently ticked the consent box. Verified: the link navigates to `/legal` and leaves consent untouched.
+- **M10.5** Two tests added: the consent row meets 44px on touch projects and tapping it toggles; and the privacy link navigates without toggling. Visual baselines regenerated, since the row is taller.
+
 ## M8 — Hardening
 
 - **M8.1 — real defect, caught by looking at the render.** The H1 was breaking into **four** lines at 1440px instead of FR-204's three: `measure-display`'s 16ch cap was fighting the author-controlled `<br>`. The cap is released at `lg` and above. No assertion would have caught this; the visual baseline did.

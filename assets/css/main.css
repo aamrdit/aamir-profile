@@ -591,6 +591,27 @@
   }
 }
 
+/* FR-008: at least 44x44px on touch viewports. A checkbox drawn at 24px meets
+   WCAG 2.2 SC 2.5.8 but not the spec's stricter bar, and the small target made
+   the consent control genuinely hard to hit -- a Playwright click on a 412px
+   viewport toggled it twice and left it unchecked. The box still *draws* at
+   24px; the padding grows the hit area around it to 48px without changing the
+   layout, because the negative margin absorbs it. */
+@utility checkbox-target {
+  /* FR-008 wants a 44px target on touch. The checkbox itself cannot provide
+     one: Chrome ignores padding on a native checkbox (appearance: auto), so
+     growing the box needs appearance: none and a hand-drawn control -- which
+     Section 18's preference for native elements argues against.
+     Instead the whole label row is the target, which is what a person taps
+     anyway, and the box keeps its 24px visual. */
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+  min-height: var(--spacing-48);
+  padding-block: var(--spacing-6);
+  cursor: pointer;
+}
+
 /* FR-005: the skip link is the first focusable element, visually hidden until
    focused, and then fully visible at the top left. */
 @utility skip-link {
