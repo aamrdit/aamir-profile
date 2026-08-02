@@ -19,7 +19,14 @@ import { readdir, readFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import { existsSync } from 'node:fs'
 
-const OUTPUT_DIR = '.output/public'
+/**
+ * The Vercel preset writes to .vercel/output/static; the node-server preset
+ * writes to .output/public. EVERY existing output is scanned, not the first
+ * match: locally both directories can exist at once, and picking one silently
+ * checked a stale build while reporting success.
+ */
+const OUTPUT_CANDIDATES = ['.output/public', '.vercel/output/static']
+const OUTPUT_DIRS = OUTPUT_CANDIDATES.filter((dir) => existsSync(dir))
 const SOURCE_DIRS = ['components', 'pages', 'layouts']
 
 /** @param {string} dir @param {string[]} exts @returns {AsyncGenerator<string>} */
@@ -32,13 +39,27 @@ async function* walk(dir, exts) {
   }
 }
 
+/** Yields [outputDir, file] across every build output present. */
+async function* walkOutputs(exts) {
+  for (const dir of OUTPUT_DIRS) {
+    for await (const file of walk(dir, exts)) yield [dir, file]
+  }
+}
+
+if (OUTPUT_DIRS.length === 0) {
+  console.error(
+    `check-bans: no build output found. Looked for ${OUTPUT_CANDIDATES.join(' and ')}.`,
+  )
+  process.exit(1)
+}
+
 /** @type {string[]} */
 const failures = []
 
 // --- Built CSS: no shadows, no gradients, no radius above 2px ---------------
-for await (const file of walk(OUTPUT_DIR, ['.css'])) {
+for await (const [outDir, file] of walkOutputs(['.css'])) {
   const css = await readFile(file, 'utf8')
-  const where = relative(OUTPUT_DIR, file)
+  const where = relative(outDir, file)
 
   // `box-shadow: none` is permitted -- Tailwind's Preflight uses it to strip
   // Firefox's default :-moz-ui-invalid shadow, which is the ban's intent, not
@@ -65,13 +86,42 @@ for await (const file of walk(OUTPUT_DIR, ['.css'])) {
 }
 
 // --- Built JS: no scroll listeners (FR-406, M3) ----------------------------
-for await (const file of walk(OUTPUT_DIR, ['.js', '.mjs'])) {
+for await (const [outDir, file] of walkOutputs(['.js', '.mjs'])) {
   const js = await readFile(file, 'utf8')
   if (/addEventListener\(\s*["'`]scroll["'`]/.test(js)) {
     failures.push(
-      `${relative(OUTPUT_DIR, file)}: scroll event listener found. Use ` +
+      `${relative(outDir, file)}: scroll event listener found. Use ` +
         'IntersectionObserver (FR-406, M3 acceptance).',
     )
+  }
+}
+
+// --- Every referenced image variant must exist as a file -------------------
+//
+// @nuxt/image emits /_ipx/ URLs into the HTML, but only actually writes those
+// files under some presets. Under the Vercel preset it did not, leaving the
+// hero and about portraits pointing at 404s. nuxt.config lists the variants
+// explicitly in prerender.routes; this makes sure that list cannot fall out of
+// step with what the templates ask for.
+{
+  /** @type {Set<string>} */
+  const referenced = new Set()
+  for await (const [outDir, file] of walkOutputs(['.html'])) {
+    const html = await readFile(file, 'utf8')
+    for (const match of html.matchAll(/["'\s](\/_ipx\/[^"'\s]+)/g)) {
+      if (match[1]) referenced.add(`${outDir}|${match[1].replace(/&amp;/g, '&')}`)
+    }
+  }
+
+  for (const entry of [...referenced].sort()) {
+    const [outDir, url] = entry.split('|')
+    const onDisk = join(outDir, decodeURIComponent(url))
+    if (!existsSync(onDisk)) {
+      failures.push(
+        `${outDir}${url}: referenced by an <img> but not generated. Add it to ` +
+          'nitro.prerender.routes in nuxt.config.ts (DECISIONS.md M9.1).',
+      )
+    }
   }
 }
 
@@ -87,7 +137,7 @@ for await (const file of walk(OUTPUT_DIR, ['.js', '.mjs'])) {
 // `--spacing-0: 0px` fixes it; this guard makes sure it stays fixed.
 {
   const builtCss = []
-  for await (const file of walk(OUTPUT_DIR, ['.css'])) {
+  for await (const [, file] of walkOutputs(['.css'])) {
     builtCss.push(await readFile(file, 'utf8'))
   }
   const allCss = builtCss.join('\n')

@@ -84,6 +84,20 @@ export default defineNuxtConfig({
     defaultLocale: 'en-GB',
   },
 
+  /**
+   * Pinned to IPX. Left on auto, @nuxt/image detects Vercel and switches to
+   * Vercel Image Optimization, emitting /_vercel/image?url=... instead of
+   * /_ipx/... That endpoint only exists at runtime, so the prerender crawler
+   * hit it during the build, got a 404, and failOnError killed the deploy.
+   *
+   * IPX also keeps three things the spec wants: variants generated at build
+   * time into static files (C12, and FR-009's "no route renders on demand"),
+   * the /_ipx/** content-type rule that stops WebP being served as JPEG
+   * (M2.2), and no dependency on a paid runtime image service for one
+   * 512px portrait.
+   */
+  image: { provider: 'ipx' },
+
   // C11: @nuxtjs/seo bundles nuxt-og-image, which pulls in satori. SEO-04
   // specifies a separately designed static /images/og.jpg, so it stays off.
   ogImage: { enabled: false },
@@ -134,7 +148,24 @@ export default defineNuxtConfig({
 
     prerender: {
       crawlLinks: true,
-      routes: ['/', '/thanks', '/legal', '/llms.txt', '/aamir-butt.md'],
+      routes: [
+        '/',
+        '/thanks',
+        '/legal',
+        '/llms.txt',
+        '/aamir-butt.md',
+        // The image variants. Under the node-server preset @nuxt/image emits
+        // these as a side effect of the build, but under the Vercel preset it
+        // does not, leaving the HTML pointing at /_ipx/ URLs that 404. Listing
+        // them keeps every image a static file on both presets, which is what
+        // FR-009 and C12 ask for. scripts/check-bans.mjs fails the build if an
+        // /_ipx/ src in the built HTML has no matching file, so this list
+        // cannot silently go stale.
+        '/_ipx/f_webp&q_82&s_240x240/images/aamir-butt-profile.jpg',
+        '/_ipx/f_webp&q_82&s_480x480/images/aamir-butt-profile.jpg',
+        '/_ipx/f_webp&q_82&s_180x180/images/aamir-butt-profile.jpg',
+        '/_ipx/f_webp&q_82&s_360x360/images/aamir-butt-profile.jpg',
+      ],
       failOnError: true,
     },
   },

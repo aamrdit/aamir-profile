@@ -122,6 +122,18 @@ on engineering grounds. **M0**–**M8** = implementation choice at that mileston
 - **M7.6** `plugins/` is not in Section 7's tree; it is the conventional place for client-only initialisation in Nuxt.
 - **M7.7** The footer's link to `/aamir-butt.md` carries a local `eslint-disable` for `link-checker`, which only knows page routes and cannot see Nitro server routes. `01-page-load` asserts the URL returns 200, so the link is genuinely checked.
 
+## M9 — Vercel deployment
+
+Found only by deploying. Everything here builds cleanly under the local
+`node-server` preset and fails under Vercel's, which is the gap.
+
+- **M9.1 — the deploy failure.** `@nuxt/image` detects Vercel and switches from IPX to Vercel Image Optimization, emitting `/_vercel/image?url=…` instead of `/_ipx/…`. That endpoint exists only at runtime, so the prerender crawler followed it during the build, got a 404, and `failOnError: true` killed the deploy. Fixed by pinning `image: { provider: 'ipx' }`, which also preserves build-time variant generation (C12), the `/_ipx/**` content-type rule (M2.2), and FR-009's "no route renders on demand" — and avoids a paid runtime image service for one 512px portrait.
+- **M9.2 — the bug the first fix exposed.** With IPX pinned, the Vercel preset still did not *write* the variants, unlike the node-server preset, leaving the HTML pointing at `/_ipx/` URLs that 404 at runtime. Worse than the original error, and invisible in the build log. The four variants are now listed explicitly in `nitro.prerender.routes`, and `check-bans.mjs` fails the build if any `/_ipx/` src in the built HTML has no matching file, so that list cannot silently go stale.
+- **M9.3 — a latent second failure, fixed before it fired.** Both guard scripts scanned only `.output/public`. The Vercel preset writes to `.vercel/output/static`, so on Vercel `check-placeholders.mjs` would have exited 1 with "not found" (failing the build for the wrong reason) and `check-bans.mjs` would have passed vacuously, having scanned nothing. Both now scan **every** output directory that exists.
+- **M9.4** They scan *all* candidates rather than the first match. An earlier version used `find`, and because both directories can exist locally it checked a stale `.output/public` while reporting success — the negative test for the new image guard passed when it should have failed, which is how this was caught. A guard that silently checks the wrong directory is worse than no guard.
+- **M9.5** Vercel's Node version was verified as **24.x**, matching `engines.node`, so it was never a factor. Worth recording because it was the first hypothesis and it was wrong: a Node mismatch fails before the build with an explicit message, not with a prerender error.
+- **M9.6 — expected, not a bug.** Both attempted deploys were **Production**, where `VERCEL_ENV=production` makes `check-placeholders.mjs` fail while the 18 `TODO_` values remain (FR-901). Preview deploys build and deploy fine. Production will keep failing, by design, until the facts are filled in.
+
 ## M8 — Hardening
 
 - **M8.1 — real defect, caught by looking at the render.** The H1 was breaking into **four** lines at 1440px instead of FR-204's three: `measure-display`'s 16ch cap was fighting the author-controlled `<br>`. The cap is released at `lg` and above. No assertion would have caught this; the visual baseline did.

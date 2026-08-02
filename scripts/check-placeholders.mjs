@@ -13,7 +13,14 @@ import { readdir, readFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 import { existsSync } from 'node:fs'
 
-const OUTPUT_DIR = '.output/public'
+/**
+ * The Vercel preset writes to .vercel/output/static, not .output/public.
+ * Checking only the latter meant this script exited 1 on Vercel with
+ * "not found" -- failing the build for the wrong reason -- while
+ * check-bans.mjs passed vacuously by scanning nothing at all.
+ */
+const OUTPUT_CANDIDATES = ['.output/public', '.vercel/output/static']
+const OUTPUT_DIRS = OUTPUT_CANDIDATES.filter((dir) => existsSync(dir))
 const NEEDLE = 'TODO_'
 const SCANNED_EXTENSIONS = ['.html', '.js', '.mjs', '.css', '.json', '.txt', '.md', '.xml']
 const isProduction = process.env.VERCEL_ENV === 'production'
@@ -27,20 +34,24 @@ async function* walk(dir) {
   }
 }
 
-if (!existsSync(OUTPUT_DIR)) {
-  console.error(`check-placeholders: ${OUTPUT_DIR} not found. Run the build first.`)
+if (OUTPUT_DIRS.length === 0) {
+  console.error(
+    `check-placeholders: no build output found. Looked for ${OUTPUT_CANDIDATES.join(' and ')}.`,
+  )
   process.exit(1)
 }
 
 /** @type {Map<string, Set<string>>} */
 const hits = new Map()
 
-for await (const file of walk(OUTPUT_DIR)) {
-  const contents = await readFile(file, 'utf8')
-  if (!contents.includes(NEEDLE)) continue
+for (const outDir of OUTPUT_DIRS) {
+  for await (const file of walk(outDir)) {
+    const contents = await readFile(file, 'utf8')
+    if (!contents.includes(NEEDLE)) continue
 
-  const tokens = new Set(contents.match(/TODO_[A-Z0-9_]*/g) ?? [NEEDLE])
-  hits.set(relative(OUTPUT_DIR, file), tokens)
+    const tokens = new Set(contents.match(/TODO_[A-Z0-9_]*/g) ?? [NEEDLE])
+    hits.set(relative(outDir, file), tokens)
+  }
 }
 
 if (hits.size === 0) {
