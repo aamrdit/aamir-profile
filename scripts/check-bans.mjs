@@ -75,6 +75,45 @@ for await (const file of walk(OUTPUT_DIR, ['.js', '.mjs'])) {
   }
 }
 
+// --- Zero-value utilities must actually exist in the built CSS -------------
+//
+// main.css sets `--spacing: initial` to force the three-based scale (C8). The
+// side effect is that Tailwind compiles every zero-value utility as
+// `calc(var(--spacing) * 0)`, which is invalid, so those rules are dropped
+// from the stylesheet SILENTLY. That broke the fixed header's width, the
+// mobile overlay, and eight min-w-0 guards, and no test noticed -- the
+// assertions check computed positions, never whether a requested class exists.
+//
+// `--spacing-0: 0px` fixes it; this guard makes sure it stays fixed.
+{
+  const builtCss = []
+  for await (const file of walk(OUTPUT_DIR, ['.css'])) {
+    builtCss.push(await readFile(file, 'utf8'))
+  }
+  const allCss = builtCss.join('\n')
+
+  /** @type {Set<string>} */
+  const requested = new Set()
+  for (const dir of SOURCE_DIRS) {
+    for await (const file of walk(dir, ['.vue'])) {
+      const source = await readFile(file, 'utf8')
+      for (const match of source.matchAll(/[\s"'`:]((?:-?[a-z][a-z-]*)-0)(?=[\s"'`]|$)/g)) {
+        if (match[1]) requested.add(match[1])
+      }
+    }
+  }
+
+  for (const utility of [...requested].sort()) {
+    if (!allCss.includes(utility)) {
+      failures.push(
+        `${utility}: used in a template but absent from the built CSS. ` +
+          'Zero-value utilities need a named --spacing-0 token while the ' +
+          'dynamic spacing scale is disabled (DECISIONS.md C8a).',
+      )
+    }
+  }
+}
+
 // --- Sources: no div/span standing in for <a> or <button> ------------------
 for (const dir of SOURCE_DIRS) {
   for await (const file of walk(dir, ['.vue'])) {
