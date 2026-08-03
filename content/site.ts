@@ -12,21 +12,36 @@
 // Section 5: placeholders the human must fill
 // ---------------------------------------------------------------------------
 
+/**
+ * Values marked "from CV" are derived from Aamir's own CV (Profile.pdf,
+ * 08/07/2026) and are DRAFTS pending his written confirmation — launch
+ * checklist item 12. Nothing here is invented; anything the CV does not
+ * state remains a TODO_ marker and keeps blocking a production build.
+ */
 export const PLACEHOLDERS = {
-  YEARS_EXPERIENCE: 'TODO_YEARS', // e.g. '20+'
-  PROOF_1_VALUE: 'TODO_PROOF_1', // suggested: '20+ yrs'
+  // CV: earliest listed role January 2003, so 23 years to date. Kept as '20+'
+  // to stay consistent with the hero standfirst and the About heading, which
+  // both say twenty years.
+  YEARS_EXPERIENCE: '20+',
+  PROOF_1_VALUE: '20+ yrs',
   PROOF_1_LABEL: 'ENTERPRISE IT',
-  PROOF_2_VALUE: 'TODO_PROOF_2', // suggested: '40+'
+  // CV: "baseline model and maintain data and technical maps for 50+ products
+  // and associated services". NOTE: the CV says products and services; this
+  // label says systems integrated. Confirm or correct the wording.
+  PROOF_2_VALUE: '50+',
   PROOF_2_LABEL: 'SYSTEMS INTEGRATED',
-  PROOF_3_VALUE: 'TODO_PROOF_3', // suggested: 'GBP 10m+'
+  // NOT IN THE CV. The only figure it carries is a 25K annual cost reduction,
+  // which is a saving, not programme value. Aamir must supply this.
+  PROOF_3_VALUE: 'TODO_PROOF_3',
   PROOF_3_LABEL: 'PROGRAMME VALUE DELIVERED',
-  PROOF_4_VALUE: 'TODO_PROOF_4', // suggested: '6'
+  // CV: travel and e-commerce, hospitality and membership, finance and
+  // banking, marketing, technology consultancy.
+  PROOF_4_VALUE: '5',
   PROOF_4_LABEL: 'SECTORS',
+  // NOT IN THE CV, and not derivable: the CV shows a role running to
+  // "Present". Both are Aamir's to decide.
   AVAILABLE_FROM: 'TODO_DATE', // DD/MM/YYYY
   NOTICE_PERIOD: 'TODO_NOTICE', // e.g. '2 weeks'
-  CASE_01: 'TODO_CASE_01',
-  CASE_02: 'TODO_CASE_02',
-  CASE_03: 'TODO_CASE_03',
 } as const
 
 // ---------------------------------------------------------------------------
@@ -281,10 +296,87 @@ export const WORK = {
    * be named -- a hard compliance requirement. Each note's body is a single
    * placeholder until Aamir writes it.
    */
+  /**
+   * Drafted from Aamir's CV and anonymised to sector level. FR-704 and Section
+   * 17.1 forbid naming any organisation, so no employer or client appears here
+   * even though the CV names five. Every outcome carries a number, per
+   * Section 5.
+   *
+   * DRAFT pending written confirmation (checklist item 12). Note also that
+   * these were permanent roles rather than client engagements; the section is
+   * headed "Selected engagements", so Aamir should be comfortable with that
+   * framing before launch.
+   */
   cases: [
-    { index: 'CASE 01', sector: 'TODO_CASE_01', duration: 'TODO_CASE_01', body: PLACEHOLDERS.CASE_01 },
-    { index: 'CASE 02', sector: 'TODO_CASE_02', duration: 'TODO_CASE_02', body: PLACEHOLDERS.CASE_02 },
-    { index: 'CASE 03', sector: 'TODO_CASE_03', duration: 'TODO_CASE_03', body: PLACEHOLDERS.CASE_03 },
+    {
+      index: 'CASE 01',
+      sector: 'Hospitality and membership',
+      duration: '5 years',
+      parts: [
+        {
+          label: 'Context',
+          text: 'A global hospitality and membership group running a mixed estate of member-facing and back-office systems across its sites.',
+        },
+        {
+          label: 'Problem',
+          text: 'Business requirements arrived faster than they could be translated into buildable technical designs, and delivery was split across in-house, offshore and multiple vendor locations.',
+        },
+        {
+          label: 'What I did',
+          text: 'Owned the translation of business needs into technical system designs and the documentation developers and testers worked from, and ran delivery across the vendor and offshore teams end to end.',
+        },
+        {
+          label: 'Outcome',
+          text: 'Delivery held to schedule and quality against an aggressive timeline while coordinating 6 to 8 contract resources alongside offshore teams.',
+        },
+      ],
+    },
+    {
+      index: 'CASE 02',
+      sector: 'Travel and experiences marketing',
+      duration: '3 years 8 months',
+      parts: [
+        {
+          label: 'Context',
+          text: 'A travel and experiences marketing business with a large product portfolio and no shared view of how its data, processes and infrastructure fitted together.',
+        },
+        {
+          label: 'Problem',
+          text: 'Sprint teams were making architectural decisions without a baseline to work from, so constraints surfaced late and roadmaps were built on assumption.',
+        },
+        {
+          label: 'What I did',
+          text: 'Built and maintained TOGAF-style baseline models of the estate, supplied architectural frameworks to the sprint teams, and held design authority sign-off during sprints.',
+        },
+        {
+          label: 'Outcome',
+          text: 'Data and technical maps covering 50+ products and associated services, giving product managers a factual basis for roadmap decisions.',
+        },
+      ],
+    },
+    {
+      index: 'CASE 03',
+      sector: 'Digital services consultancy',
+      duration: '3 years',
+      parts: [
+        {
+          label: 'Context',
+          text: 'A digital services consultancy delivering e-commerce, mobile and CMS products for external clients while running its own back office on manual process.',
+        },
+        {
+          label: 'Problem',
+          text: 'Internal administration was absorbing cost and effort that should have been going into client delivery.',
+        },
+        {
+          label: 'What I did',
+          text: 'Specified and implemented a replacement back-office system alongside the client delivery programme, and coordinated the cross-functional offshore teams involved.',
+        },
+        {
+          label: 'Outcome',
+          text: 'Annual operating cost reduced by GBP 25,000, with the saving recurring year on year.',
+        },
+      ],
+    },
   ],
   /**
    * Section 5 makes this format mandatory: exactly four labelled parts, one to
@@ -378,15 +470,46 @@ export const AVAILABILITY = {
 export const FAQ = {
   eyebrow: 'QUESTIONS',
   h2: 'Before you ask.',
+  /**
+   * Six of the eight are drafted from positioning already agreed in the copy
+   * deck (the availability rows and the engagement models) or from the CV.
+   * Question 1 stays a TODO because it depends on AVAILABLE_FROM, which only
+   * Aamir can set. All eight are drafts for his review, and FR-805 means
+   * whatever is written here is exactly what the FAQPage JSON-LD publishes.
+   */
   items: [
-    { question: 'Are you available for contract work right now?', answer: 'TODO_FAQ_1' },
-    { question: 'Do you work inside or outside IR35?', answer: 'TODO_FAQ_2' },
-    { question: 'What is your day rate?', answer: 'TODO_FAQ_3' },
-    { question: 'Do you work remotely or on site?', answer: 'TODO_FAQ_4' },
-    { question: 'What kind of automation work do you take on?', answer: 'TODO_FAQ_5' },
-    { question: 'Are you a developer or an architect?', answer: 'TODO_FAQ_6' },
-    { question: 'What size of organisation do you usually work with?', answer: 'TODO_FAQ_7' },
-    { question: 'How do we start?', answer: 'TODO_FAQ_8' },
+    {
+      question: 'Are you available for contract work right now?',
+      answer: 'TODO_FAQ_1',
+    },
+    {
+      question: 'Do you work inside or outside IR35?',
+      answer: 'Outside IR35 by preference, and most of the work I take on is scoped that way. I will look at an inside IR35 engagement if the brief genuinely warrants it, but it is not the default.',
+    },
+    {
+      question: 'What is your day rate?',
+      answer: 'On request. I benchmark to UK market rates for senior automation and architecture contracting, and I would rather quote against a real scope than publish a number that means nothing without one.',
+    },
+    {
+      question: 'Do you work remotely or on site?',
+      answer: 'Remote by default, UK-wide. I am London-based and happy to be on site for discovery, workshops and the points in a programme where being in the room actually changes the outcome.',
+    },
+    {
+      question: 'What kind of automation work do you take on?',
+      answer: 'Work where deciding what to automate is the hard part. Process discovery and prioritisation, automation architecture, oversight of the build, and handover into live. I am less useful where the answer is already agreed and you just need extra hands.',
+    },
+    {
+      question: 'Are you a developer or an architect?',
+      answer: 'An architect who has been a developer, and still reads the code. My background runs from lead developer through solutions architect to technical delivery, which is why I tend to be hired where design decisions and delivery reality have to meet.',
+    },
+    {
+      question: 'What size of organisation do you usually work with?',
+      answer: 'Mostly larger organisations with estates that have grown complicated: multiple products, several vendors, offshore delivery and legacy that cannot simply be switched off. That is where the judgement is worth paying for.',
+    },
+    {
+      question: 'How do we start?',
+      answer: 'Usually a short discovery sprint, two to three weeks at fixed scope, ending in a ranked automation backlog with effort, dependency and value estimates. If you already know what you need built, we can skip straight to an embedded contract.',
+    },
   ],
 } as const
 

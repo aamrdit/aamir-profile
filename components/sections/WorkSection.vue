@@ -38,12 +38,12 @@ import { WORK } from '~/content/site'
         </div>
 
         <dl class="min-w-0 md:col-span-9">
-          <template v-for="label in WORK.partLabels" :key="label">
+          <template v-for="part in note.parts" :key="part.label">
             <dt class="font-mono text-mono-label mt-18 uppercase first:mt-0">
-              {{ label }}
+              {{ part.label }}
             </dt>
             <dd class="font-primary text-body measure-prose mt-6 break-words">
-              {{ note.body }}
+              {{ part.text }}
             </dd>
           </template>
         </dl>

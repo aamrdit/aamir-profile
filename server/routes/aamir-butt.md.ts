@@ -81,7 +81,7 @@ export default defineEventHandler((event) => {
       `- Sector: ${note.sector}`,
       `- Duration: ${note.duration}`,
       '',
-      ...WORK.partLabels.map((label) => `**${label}.** ${note.body}`),
+      ...note.parts.map((part) => `**${part.label}.** ${part.text}`),
       '',
     ]),
     `## ${TOOLKIT.h2}`,
